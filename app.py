@@ -1,16 +1,15 @@
 """
-Policy-to-Impact Intelligence System
+Policy-to-Impact Intelligence System (PoliSight-AI)
 An NLP and Machine Learning-Based Framework for Education Policy Evaluation and Decision Support in India.
-Main Streamlit Application Entrypoint.
+Main Application Entrypoint & Executive Overview.
 """
 
-import os
 from pathlib import Path
 import streamlit as st
+import pandas as pd
 
-# Configure Streamlit page settings
 st.set_page_config(
-    page_title="Policy-to-Impact Intelligence System",
+    page_title="PoliSight-AI | Education Policy Intelligence",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -24,40 +23,37 @@ from database.db_connection import (
     insert_policy_indicator,
     get_policy_objectives_with_indicators,
     get_available_filters,
-)
-from utils.helpers import (
-    apply_custom_css,
-    render_academic_disclaimer,
-    render_kpi,
+    query_education_records,
 )
 from modules.policy_extractor import PolicyExtractor
 from modules.nlp_processor import PolicyNLPProcessor
+from modules.data_collector import EducationDataCollector
+from utils.helpers import (
+    apply_custom_css,
+    render_kpi,
+    render_academic_disclaimer,
+)
+from utils.visualizations import plot_indicator_trend_with_target
 
-# Apply custom academic styling
+# Apply minimalist, clean UI styling
 apply_custom_css()
 
-# Initialize Database
-try:
-    init_db()
-except Exception as e:
-    st.error(f"Database initialization error: {e}")
+# Initialize Database and Seed Baseline if empty
+init_db()
 
 
-def seed_nep_2020_if_needed():
-    """Ensure NEP 2020 School Education baseline exists in the database on initial startup."""
+def auto_seed_baseline():
+    """Ensure sample policy and benchmark records exist so the app is instantly usable."""
     policies = get_all_policies()
     if not any(p["code"] == "NEP_2020" for p in policies):
         nep_file = Path(__file__).parent / "data" / "policies" / "NEP_2020_School_Education.txt"
         if nep_file.exists():
             extractor = PolicyExtractor()
             nlp = PolicyNLPProcessor()
-
             with open(nep_file, "r", encoding="utf-8") as f:
                 content = f.read()
-
             extracted = extractor.extract_from_file(nep_file, "NEP_2020_School_Education.txt")
             analysis = nlp.analyze_policy_document(extracted)
-
             policy_id = insert_policy(
                 title="National Education Policy 2020",
                 code="NEP_2020",
@@ -68,8 +64,6 @@ def seed_nep_2020_if_needed():
                 document_text=content,
                 summary=analysis.get("summary", ""),
             )
-
-            # Insert parsed objectives & indicators
             for obj in analysis.get("objectives", []):
                 obj_id = insert_policy_objective(
                     policy_id=policy_id,
@@ -92,125 +86,90 @@ def seed_nep_2020_if_needed():
                     source_reference=obj.get("source", ""),
                 )
 
+    records = query_education_records()
+    if records.empty:
+        collector = EducationDataCollector()
+        collector.generate_and_save_udise_sample()
+        sample_path = Path(__file__).parent / "data" / "sample" / "udise_education_dataset.csv"
+        if sample_path.exists():
+            df_sample = pd.read_csv(sample_path)
+            collector.ingest_and_store(
+                df=df_sample,
+                source_name="UDISE+ Benchmark Sample",
+                source_type="UDISE+",
+            )
 
-# Seed initial baseline
-seed_nep_2020_if_needed()
+
+auto_seed_baseline()
 
 # Sidebar Navigation Header
-st.sidebar.title("🎓 Policy-to-Impact")
-st.sidebar.caption("AI/ML Education Policy Evaluation System")
+st.sidebar.markdown("### 🎓 PoliSight-AI")
+st.sidebar.caption("Education Policy Intelligence Framework")
 st.sidebar.markdown("---")
 
-# Fetch current metadata for KPIs
-policies = get_all_policies()
-active_policy = policies[0] if policies else None
-objectives = get_policy_objectives_with_indicators(active_policy["id"]) if active_policy else []
-filter_meta = get_available_filters()
-
-# Main Header
+# Header Section
 st.markdown('<div class="main-header">Policy-to-Impact Intelligence System</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="sub-header">An NLP and Machine Learning-Based Framework for Education Policy Evaluation and Decision Support in India</div>',
+    '<div class="sub-header">An NLP and Machine Learning framework connecting National Education Policy (NEP 2020) goals with real-world UDISE+ school data.</div>',
     unsafe_allow_html=True,
 )
 
-# Academic disclaimer
-render_academic_disclaimer()
+# Fetch current metadata for KPIs
+policies = get_all_policies()
+active_policy = policies[0] if policies else {"title": "NEP 2020", "publication_year": 2020}
+objectives = get_policy_objectives_with_indicators(active_policy.get("id", 1))
+filter_meta = get_available_filters()
+records_df = query_education_records()
 
-# Overview KPI row
+# Clean KPI Row
 col1, col2, col3, col4 = st.columns(4)
-
 with col1:
-    p_title = active_policy["title"] if active_policy else "None"
-    render_kpi("Active Policy Document", p_title, f"Published: {active_policy.get('publication_year', 2020) if active_policy else 'N/A'}")
-
+    render_kpi("Active Policy", "NEP 2020", "School Education (Govt. of India)", border_color="#2563EB")
 with col2:
     total_obj = len({o["objective_id"] for o in objectives})
-    render_kpi("Extracted Objectives", total_obj, "NLP-parsed goals")
-
+    render_kpi("Tracked Goals", f"{total_obj} Objectives", "NLP-extracted targets", border_color="#059669")
 with col3:
-    num_targets = sum(1 for o in objectives if o.get("is_numerical_target") == 1)
-    render_kpi("Numerical Policy Targets", num_targets, "Explicit statutory targets")
-
+    states_count = len(filter_meta.get("states", []))
+    render_kpi("Geographic Coverage", f"{states_count} States", "19 States • 59 Districts", border_color="#7C3AED")
 with col4:
-    tot_recs = filter_meta.get("total_records", 0)
-    render_kpi("Education Records in DB", tot_recs, "UDISE+ & official metrics")
+    y_str = f"{filter_meta.get('min_year', 2018)} - {filter_meta.get('max_year', 2024)}"
+    render_kpi("Time Horizon", y_str, f"{filter_meta.get('total_records', 0)} UDISE+ records", border_color="#D97706")
 
-st.markdown("### System Architecture & Analytical Workflow")
+st.markdown("<br>", unsafe_allow_html=True)
 
-# Workflow Architecture diagram
-st.markdown(
-    """
-```mermaid
-flowchart LR
-    A[Policy Document<br/>PDF/DOCX/TXT] --> B[Module 1: NLP Policy<br/>Understanding]
-    B --> C[Module 2: Data Collection<br/>& Preprocessing]
-    C --> D[Module 3: Impact Analysis<br/>Regression/Clustering]
-    D --> E[Module 4: Regional<br/>Risk Detection]
-    E --> F[Module 5: Recommendation<br/>Engine]
-    F --> G[Interactive Dashboard<br/>& Policy Reports]
-```
-    """
-)
+# Main Grid: National Indicator Trajectory
+c_chart, c_guide = st.columns([1.6, 1])
 
-st.markdown("---")
+with c_chart:
+    st.markdown("##### 📈 National Trajectory: Gross Enrolment Ratio (GER)")
+    if not records_df.empty:
+        ger_annual = records_df.groupby("year")["ger"].mean().reset_index()
+        fig = plot_indicator_trend_with_target(
+            df=ger_annual,
+            year_col="year",
+            val_col="ger",
+            target_val=100.0,
+            target_year=2030,
+            indicator_title="National Average GER",
+            unit="%",
+        )
+        fig.update_layout(height=340, margin=dict(l=30, r=20, t=30, b=30))
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Loading baseline education records...")
 
-# Feature Highlights Grid
-st.markdown("### Framework Modules & Capabilities")
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.info("#### 1. Policy Understanding (NLP)")
-    st.write(
-        "Upload Indian policy documents (NEP 2020). Automatically extracts objectives, target populations, "
-        "measurable indicators, and explicit numerical targets while preserving provenance."
+with c_guide:
+    st.markdown("##### 🧭 How the System Works")
+    st.markdown(
+        """
+        1. **📄 Policy Understanding (NLP):** Reads official policy documents and identifies targets (*100% GER by 2030, PTR under 30:1*).
+        2. **📊 Data Preprocessing:** Standardizes school data (UDISE+) across all states and districts.
+        3. **📈 Impact Analysis (ML):** Uses Regression and Clustering to predict progress toward 2030.
+        4. **⚠️ Risk Detection:** Identifies which regions have large performance gaps using Isolation Forest.
+        5. **💡 Recommendations:** Generates actionable, prioritized policy guidance for officials.
+        """
     )
-    if st.button("Go to Policy Understanding", key="btn_nav_policy"):
-        st.switch_page("pages/2_Policy_Understanding.py")
+    st.caption("👈 **Use the left sidebar** to navigate through each module step-by-step.")
 
-with c2:
-    st.info("#### 2. Data Collection & Preprocessing")
-    st.write(
-        "Integrates official UDISE+ and Ministry of Education datasets. Handles missing values, standardizes "
-        "state/district names, validates data integrity, and generates data quality reports."
-    )
-    if st.button("Go to Data Collection", key="btn_nav_data"):
-        st.switch_page("pages/3_Data_Collection.py")
-
-with c3:
-    st.info("#### 3. Impact Analysis (ML)")
-    st.write(
-        "Linear Regression trends, Random Forest association analysis, K-Means regional clustering, "
-        "and time-series forecasting against policy target milestones."
-    )
-    if st.button("Go to Impact Analysis", key="btn_nav_impact"):
-        st.switch_page("pages/4_Impact_Analysis.py")
-
-c4, c5, c6 = st.columns(3)
-
-with c4:
-    st.info("#### 4. Regional Risk Detection")
-    st.write(
-        "Multi-criteria anomaly detection (Isolation Forest) and target-gap scoring to classify states and "
-        "districts into High, Moderate, and Low risk tiers with explainability."
-    )
-    if st.button("Go to Risk Detection", key="btn_nav_risk"):
-        st.switch_page("pages/5_Risk_Detection.py")
-
-with c5:
-    st.info("#### 5. Evidence-Based Recommendations")
-    st.write(
-        "Generates actionable, prioritized policy guidance for flagged regions. Explains underlying data "
-        "correlations without unfounded causal claims."
-    )
-    if st.button("Go to Recommendations", key="btn_nav_rec"):
-        st.switch_page("pages/6_Recommendations.py")
-
-with c6:
-    st.info("#### 6. Downloadable Reports")
-    st.write(
-        "Export comprehensive policy evaluation dossiers in PDF format (ReportLab) and analytical datasets "
-        "in CSV format for academic publication and governance review."
-    )
-    if st.button("Go to Reports", key="btn_nav_rep"):
-        st.switch_page("pages/7_Reports.py")
+# Subtle academic methodology note at bottom
+render_academic_disclaimer()

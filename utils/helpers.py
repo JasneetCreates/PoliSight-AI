@@ -1,5 +1,6 @@
 """
 Utility helpers for UI styling, formatting, session state, and academic annotations.
+Clean, modern, and uncluttered design system.
 """
 
 import streamlit as st
@@ -7,96 +8,113 @@ from typing import Any, Dict, Optional
 
 
 def apply_custom_css():
-    """Apply clean, academic styling to Streamlit app."""
+    """Apply clean, modern, minimalist SaaS/Academic styling to Streamlit app."""
     st.markdown(
         """
         <style>
-        /* General layout and typography */
+        /* Base page styling */
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 3rem !important;
+            max-width: 1200px !important;
+        }
+
+        /* Clean modern headers */
         .main-header {
-            font-size: 2.1rem;
+            font-size: 1.85rem;
             font-weight: 700;
-            color: #1E3A8A;
-            margin-bottom: 0.2rem;
+            color: #0F172A;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
         }
         .sub-header {
-            font-size: 1.05rem;
-            color: #475569;
+            font-size: 0.95rem;
+            color: #64748B;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+        }
+
+        /* KPI Metric cards */
+        .kpi-container {
+            display: flex;
+            gap: 1rem;
             margin-bottom: 1.5rem;
         }
-        
-        /* Metric cards */
         .kpi-card {
-            background-color: #F8FAFC;
+            background: #FFFFFF;
             border: 1px solid #E2E8F0;
-            border-left: 4px solid #2563EB;
-            padding: 1rem 1.2rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 0.8rem;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+        .kpi-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+            border-color: #CBD5E1;
         }
         .kpi-title {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 600;
             color: #64748B;
             letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
         }
         .kpi-value {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: #0F172A;
-            margin: 0.2rem 0;
+            line-height: 1.2;
         }
         .kpi-desc {
             font-size: 0.8rem;
-            color: #64748B;
+            color: #94A3B8;
+            margin-top: 0.25rem;
         }
 
-        /* Research Disclaimers & Alerts */
-        .academic-alert {
-            background-color: #EFF6FF;
-            border-left: 4px solid #3B82F6;
-            padding: 0.8rem 1rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            color: #1E40AF;
+        /* Badges */
+        .badge-pill {
+            display: inline-block;
+            padding: 0.2rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-blue { background-color: #EFF6FF; color: #1D4ED8; }
+        .badge-green { background-color: #ECFDF5; color: #047857; }
+        .badge-amber { background-color: #FFFBEB; color: #B45309; }
+        .badge-red { background-color: #FEF2F2; color: #B91C1C; }
+
+        /* Minimal step pill */
+        .step-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #F1F5F9;
+            color: #334155;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
             margin-bottom: 1rem;
         }
-        .warning-alert {
-            background-color: #FEF3C7;
-            border-left: 4px solid #F59E0B;
-            padding: 0.8rem 1rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            color: #92400E;
+
+        /* Clean cards for action sections */
+        .action-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 1.25rem;
             margin-bottom: 1rem;
         }
-        .risk-badge-high {
-            background-color: #FEE2E2;
-            color: #991B1B;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-        .risk-badge-mod {
-            background-color: #FEF3C7;
-            color: #92400E;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
-        }
-        .risk-badge-low {
-            background-color: #DCFCE7;
-            color: #166534;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            display: inline-block;
+
+        /* Footer disclaimer */
+        .academic-footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+            font-size: 0.78rem;
+            color: #94A3B8;
+            text-align: center;
         }
         </style>
         """,
@@ -105,14 +123,12 @@ def apply_custom_css():
 
 
 def render_academic_disclaimer():
-    """Render scientific caveat separating correlation from causation."""
+    """Render subtle, clean academic methodology footer rather than a giant in-your-face banner."""
     st.markdown(
         """
-        <div class="academic-alert">
-            <strong>Research Methodology Note:</strong> Observed changes across educational indicators 
-            represent empirical trends over time. In accordance with rigorous policy evaluation methodology, 
-            observed post-2020 progress should not be conflated with direct causal attribution of NEP 2020 
-            without controlled causal inference (e.g., Difference-in-Differences / Synthetic Control).
+        <div class="academic-footer">
+            ⚖️ <strong>Academic Methodology:</strong> Empirical indicator trends evaluate longitudinal progress. 
+            Observed improvements are not conflated with direct causal attribution of NEP 2020 without controlled econometric inference.
         </div>
         """,
         unsafe_allow_html=True,
@@ -120,10 +136,10 @@ def render_academic_disclaimer():
 
 
 def render_kpi(title: str, value: Any, desc: str = "", border_color: str = "#2563EB"):
-    """Render a styled KPI card."""
+    """Render a clean styled KPI card."""
     st.markdown(
         f"""
-        <div class="kpi-card" style="border-left-color: {border_color};">
+        <div class="kpi-card" style="border-top: 3px solid {border_color};">
             <div class="kpi-title">{title}</div>
             <div class="kpi-value">{value}</div>
             <div class="kpi-desc">{desc}</div>
