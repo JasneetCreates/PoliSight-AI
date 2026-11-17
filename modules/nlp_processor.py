@@ -151,8 +151,13 @@ class PolicyNLPProcessor:
             try:
                 self._spacy_nlp = spacy.load("en_core_web_sm")
             except Exception:
-                logger.info("Spacy en_core_web_sm not downloaded. Using rule-based fallback tokenizer.")
-                self._spacy_nlp = None
+                try:
+                    import spacy.cli
+                    spacy.cli.download("en_core_web_sm")
+                    self._spacy_nlp = spacy.load("en_core_web_sm")
+                except Exception:
+                    logger.info("Spacy en_core_web_sm fallback active.")
+                    self._spacy_nlp = None
         except ImportError:
             self._spacy_nlp = None
 
