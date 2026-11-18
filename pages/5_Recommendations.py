@@ -41,10 +41,14 @@ crit_cnt = len(df_recs[df_recs["priority_level"] == "Critical"]) if not df_recs.
 high_cnt = len(df_recs[df_recs["priority_level"] == "High"]) if not df_recs.empty else 0
 med_cnt = len(df_recs[df_recs["priority_level"] == "Medium"]) if not df_recs.empty else 0
 
-c1.metric("Critical Interventions", f"{crit_cnt} Items", "Immediate priority", border_color="#DC2626")
-c2.metric("High Priority Guidance", f"{high_cnt} Items", "Urgent reform needed", border_color="#D97706")
-c3.metric("Medium Priority", f"{med_cnt} Items", "Infrastructure upgrades", border_color="#2563EB")
-c4.metric("Total Action Points", f"{len(df_recs)} Actions", "Evidence-based", border_color="#059669")
+with c1:
+    render_kpi("Critical Interventions", f"{crit_cnt} Items", "Immediate priority", border_color="#DC2626")
+with c2:
+    render_kpi("High Priority Guidance", f"{high_cnt} Items", "Urgent reform needed", border_color="#D97706")
+with c3:
+    render_kpi("Medium Priority", f"{med_cnt} Items", "Infrastructure upgrades", border_color="#2563EB")
+with c4:
+    render_kpi("Total Action Points", f"{len(df_recs)} Actions", "Evidence-based", border_color="#059669")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
