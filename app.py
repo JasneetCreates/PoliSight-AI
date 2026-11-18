@@ -4,7 +4,14 @@ An NLP and Machine Learning-Based Framework for Education Policy Evaluation and 
 Main Application Entrypoint & Executive Overview.
 """
 
+import sys
 from pathlib import Path
+
+# Guarantee project root is in sys.path on Streamlit Cloud
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import streamlit as st
 import pandas as pd
 
