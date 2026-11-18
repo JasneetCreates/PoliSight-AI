@@ -3,6 +3,14 @@ Page 3: Impact Analysis (Machine Learning)
 Module 3: Linear Regression, Random Forest, K-Means Clustering, and Time-Series Forecasting.
 """
 
+import sys
+from pathlib import Path
+
+# Guarantee project root is in sys.path on Streamlit Cloud
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import streamlit as st
 import pandas as pd
 import numpy as np

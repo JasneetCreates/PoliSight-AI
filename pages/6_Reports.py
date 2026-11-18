@@ -3,6 +3,14 @@ Page 6: Report Generation & Exports
 Module 6: Allows users to download comprehensive PDF evaluation dossiers and CSV analytical datasets.
 """
 
+import sys
+from pathlib import Path
+
+# Guarantee project root is in sys.path on Streamlit Cloud
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import streamlit as st
 import pandas as pd
 

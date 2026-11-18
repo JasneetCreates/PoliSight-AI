@@ -3,6 +3,14 @@ Page 5: Recommendation Engine
 Module 5: Generates evidence-based, prioritized policy recommendations linked to empirical gaps.
 """
 
+import sys
+from pathlib import Path
+
+# Guarantee project root is in sys.path on Streamlit Cloud
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import streamlit as st
 import pandas as pd
 

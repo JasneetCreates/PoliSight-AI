@@ -48,4 +48,9 @@ data/policies/*
 .idea/
 .vscode/
 *.swp
+
+# Miscellaneous
+Recommendation_Letter_*
+generate_pdf.py
+
 *.swo
